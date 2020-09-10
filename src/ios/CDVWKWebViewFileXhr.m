@@ -158,9 +158,20 @@ NS_ASSUME_NONNULL_BEGIN
     }
     else
     {
+        NSFileManager *fm = [NSFileManager defaultManager];
         NSURL *baseURL = [[NSBundle mainBundle] resourceURL];
-        NSString *wwwuri = [NSString stringWithFormat:@"www/%@", uri];
-        targetURL = [NSURL URLWithString:wwwuri relativeToURL:baseURL];
+        NSURL *applicationSupportURL = [fm URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
+        
+        // Is the www directory encrypted by cordova-plugin-mfp?
+        // If so, files will be decrypted in: file:///var/mobile/Containers/Data/Application/.../Library/Application%20Support/www0
+        targetURL = [NSURL URLWithString:[NSString stringWithFormat:@"www0/%@", uri] relativeToURL:applicationSupportURL];
+        
+        BOOL isDir;
+        BOOL exists = [fm fileExistsAtPath:[targetURL path] isDirectory:&isDir];
+        if (!exists) {
+            // www directory is not encrypted by cordova-plugin-mfp
+            targetURL = [NSURL URLWithString:[NSString stringWithFormat:@"www/%@", uri] relativeToURL:baseURL];
+        }
     }
     
     return targetURL;
@@ -175,11 +186,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 -(BOOL)isWebContentResourceSecure: (NSURL*) targetURL
 {
-    NSURL *baseURL = [NSURL URLWithString:@"www" relativeToURL:[[NSBundle mainBundle] resourceURL]];
-    NSString *basePath = [baseURL absoluteString];
     NSString *targetPath = [[targetURL standardizedURL] absoluteString];
-    
-    return [targetPath hasPrefix:basePath] ||
+    NSURL *mainBundleURL = [[NSBundle mainBundle] resourceURL];
+    NSURL *applicationSupportURL = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
+    NSString *mainBundleURI = [[NSURL URLWithString:@"www" relativeToURL:mainBundleURL] absoluteString];
+    NSString *applicationSupportURI = [[NSURL URLWithString:@"www0" relativeToURL:applicationSupportURL] absoluteString];
+
+    return [targetPath hasPrefix:mainBundleURI] ||
+           [targetPath hasPrefix:applicationSupportURI] ||
            [targetPath hasPrefix:[[NSURL fileURLWithPath:
                                    [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0]]  absoluteString]];
 }
