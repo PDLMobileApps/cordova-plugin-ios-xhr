@@ -162,9 +162,9 @@ NS_ASSUME_NONNULL_BEGIN
         NSURL *baseURL = [[NSBundle mainBundle] resourceURL];
         NSURL *applicationSupportURL = [fm URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
         
-        // Is the www directory encrypted by cordova-plugin-mfp?
-        // If so, files will be decrypted in: file:///var/mobile/Containers/Data/Application/.../Library/Application%20Support/www0
-        targetURL = [NSURL URLWithString:[NSString stringWithFormat:@"www0/%@", uri] relativeToURL:applicationSupportURL];
+        // If www directory is encrypted by cordova-plugin-secure-www, files will be decrypted in:
+        // file:///var/mobile/Containers/Data/Application/.../Library/Application%20Support/www
+        targetURL = [NSURL URLWithString:[NSString stringWithFormat:@"www/%@", uri] relativeToURL:applicationSupportURL];
         
         BOOL isDir;
         BOOL exists = [fm fileExistsAtPath:[targetURL path] isDirectory:&isDir];
@@ -190,7 +190,9 @@ NS_ASSUME_NONNULL_BEGIN
     NSURL *mainBundleURL = [[NSBundle mainBundle] resourceURL];
     NSURL *applicationSupportURL = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
     NSString *mainBundleURI = [[NSURL URLWithString:@"www" relativeToURL:mainBundleURL] absoluteString];
-    NSString *applicationSupportURI = [[NSURL URLWithString:@"www0" relativeToURL:applicationSupportURL] absoluteString];
+    // If www directory is encrypted by cordova-plugin-secure-www, files will be decrypted in:
+    // file:///var/mobile/Containers/Data/Application/.../Library/Application%20Support/www
+    NSString *applicationSupportURI = [[NSURL URLWithString:@"www" relativeToURL:applicationSupportURL] absoluteString];
 
     return [targetPath hasPrefix:mainBundleURI] ||
            [targetPath hasPrefix:applicationSupportURI] ||
